@@ -43,4 +43,33 @@ public class Contract {
     public void setAgentFio(String agentFio) { this.agentFio = agentFio; }
     public String getInsuranceTypeName() { return insuranceTypeName; }
     public void setInsuranceTypeName(String insuranceTypeName) { this.insuranceTypeName = insuranceTypeName; }
+
+    // Возвращает строку с зарплатой агента для договора
+    public String getSalaryString() {
+        try {
+            double amount = Double.parseDouble(insuranceAmount.replace(",", "."));
+            double rate = Double.parseDouble(tariffRate.replace(",", "."));
+            ru.mypackage.model.InsuranceType type = ru.mypackage.model.InsuranceTypesTable.getInstance().findById(idInsuranceType);
+            double percent = 0;
+            if (type != null) {
+                percent = Double.parseDouble(type.getAgentPercentage().replace(",", "."));
+            }
+            double salary = amount * rate * percent / 100.0;
+            return String.format("%.2f", salary);
+        } catch (Exception e) {
+            return "-";
+        }
+    }
+
+    // Возвращает строку со страховым платежом (страховая сумма * тарифная ставка)
+    public String getPaymentString() {
+        try {
+            double amount = Double.parseDouble(insuranceAmount.replace(",", "."));
+            double rate = Double.parseDouble(tariffRate.replace(",", "."));
+            double payment = amount * rate;
+            return String.format("%.2f", payment);
+        } catch (Exception e) {
+            return "-";
+        }
+    }
 } 

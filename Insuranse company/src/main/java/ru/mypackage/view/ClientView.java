@@ -28,11 +28,15 @@ public class ClientView {
     public ClientView(Stage stage) {
         this.stage = stage;
         createProfileUI();
-        contractsTableView = new ContractsTableView(false);
+        contractsTableView = new ContractsTableView(false, false);
+        // Добавляем столбец 'Страховой платёж' только для клиента
+        javafx.scene.control.TableColumn<ru.mypackage.model.Contract, String> paymentCol = new javafx.scene.control.TableColumn<>("Страховой платёж");
+        paymentCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPaymentString()));
+        contractsTableView.table.getColumns().add(paymentCol);
         mainBox = new VBox(10, contractsTableView);
     }
 
-    // Создаёт UI для профиля клиента
+    // Создаёт профиль клиента
     private void createProfileUI() {
         profileBox = new VBox(5);
         surnameField = new TextField();

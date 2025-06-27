@@ -22,7 +22,7 @@ public class ContractsTableView extends VBox {
     public ComboBox<String> filterColumnBox;
 
     // Конструктор: создаёт таблицу договоров и элементы управления
-    public ContractsTableView(boolean showButtons) {
+    public ContractsTableView(boolean showButtons, boolean showSalaryColumn, String salaryColumnName) {
         table = new TableView<>();
         
         filterColumnBox = new ComboBox<>();
@@ -53,6 +53,12 @@ public class ContractsTableView extends VBox {
         table.getColumns().clear();
         table.getColumns().addAll(idCol, branchIdCol, clientIdCol, typeIdCol, dateCol, amountCol, rateCol);
         
+        if (showSalaryColumn) {
+            TableColumn<Contract, String> salaryCol = new TableColumn<>(salaryColumnName);
+            salaryCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSalaryString()));
+            table.getColumns().add(salaryCol);
+        }
+        
         if (showButtons) {
             addBtn = new Button("Добавить");
             editBtn = new Button("Изменить");
@@ -72,7 +78,9 @@ public class ContractsTableView extends VBox {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    public ContractsTableView() { this(true); }
+    public ContractsTableView(boolean showButtons, boolean showSalaryColumn) { this(showButtons, showSalaryColumn, "Заработная плата"); }
+    public ContractsTableView(boolean showButtons) { this(showButtons, true, "Заработная плата"); }
+    public ContractsTableView() { this(true, true, "Заработная плата"); }
 
     // Назначает обработчик для кнопки "Добавить"
     public void setAddButtonHandler(EventHandler<ActionEvent> handler) {

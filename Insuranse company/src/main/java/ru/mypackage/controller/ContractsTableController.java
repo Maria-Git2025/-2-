@@ -45,6 +45,7 @@ public class ContractsTableController {
         contractList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
+            ru.mypackage.model.InsuranceTypesTable.getInstance().loadFromDatabase(conn);
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM Contracts");
             while (rs.next()) {

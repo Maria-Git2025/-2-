@@ -49,6 +49,12 @@ public class AgentViewController {
 
     // Загружает данные
     private void loadAgentTables() {
+        // --- Виды страхования (для расчёта зарплаты) ---
+        try {
+            java.sql.Connection conn = new ru.mypackage.database.ConnectionDatabase().connection;
+            ru.mypackage.model.InsuranceTypesTable.getInstance().loadFromDatabase(conn);
+            conn.close();
+        } catch (Exception ex) { ex.printStackTrace(); }
         // --- Клиенты агента ---
         try {
             javafx.collections.ObservableList<ru.mypackage.model.Client> clients = javafx.collections.FXCollections.observableArrayList();

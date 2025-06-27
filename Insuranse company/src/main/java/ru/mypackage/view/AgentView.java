@@ -58,7 +58,7 @@ public class AgentView {
         sectionSelector.getItems().addAll("Мои клиенты", "Мои договоры", "Филиалы", "Виды страхования");
         sectionSelector.setValue("Мои клиенты");
         clientTableView = new ClientTableView(false);
-        contractsTableView = new ContractsTableView();
+        contractsTableView = new ContractsTableView(true, true);
         branchesTableView = new BranchesTableView(false);
         insuranceTypesTableView = new InsuranceTypesTableView(false);
         mainBox = new VBox(10, sectionSelector, clientTableView);

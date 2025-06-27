@@ -85,7 +85,7 @@ public class AdminView {
         insuranceTypesTableView = new InsuranceTypesTableView();
         insuranceTypesTableView.table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
-        contractsTableView = new ContractsTableView();
+        contractsTableView = new ContractsTableView(true, true, "Заработная плата агента");
         contractsTableView.table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
