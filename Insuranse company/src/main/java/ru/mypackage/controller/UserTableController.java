@@ -26,7 +26,7 @@ public class UserTableController {
     public UserTableController(UsersTable model, UserTableView view) {
         this.model = model;
         this.view = view;
-        loadUsers();
+        loadUsersFromModel();
         filteredData = new FilteredList<User>(userList, new Predicate<User>() {
             public boolean test(User user) { return true; }
         });
@@ -40,22 +40,13 @@ public class UserTableController {
         view.deleteBtn.setOnAction(new DeleteUserHandler());
     }
 
-    // Загружает пользователей из базы данных
-    public void loadUsers() {
+    // Загружает пользователей из модели (которая работает с базой данных)
+    public void loadUsersFromModel() {
         userList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Users");
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String login = rs.getString("login");
-                String password = rs.getString("password");
-                String role = rs.getString("role");
-                userList.add(new User(id, login, password, role));
-            }
-            rs.close();
-            stmt.close();
+            model.loadFromDatabase(conn);
+            userList.addAll(model.getAll());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -87,7 +78,7 @@ public class UserTableController {
                 if ("Логин".equals(column)) return user.getLogin().toLowerCase().contains(filter);
                 if ("Пароль".equals(column)) return user.getPassword().toLowerCase().contains(filter);
                 if ("Роль".equals(column)) return user.getRole().toLowerCase().contains(filter);
-                // "Все"
+
                 return String.valueOf(user.getId()).contains(filter)
                     || user.getLogin().toLowerCase().contains(filter)
                     || user.getPassword().toLowerCase().contains(filter)
@@ -139,15 +130,12 @@ public class UserTableController {
             if (selected == null) return;
             try {
                 Connection conn = new ConnectionDatabase().connection;
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM Users WHERE id=?");
-                stmt.setInt(1, selected.getId());
-                stmt.executeUpdate();
-                stmt.close();
+                model.remove(selected, conn);
                 conn.close();
             } catch (SQLException ex) {
                 showError("Невозможно удалить запись: есть связанные записи в других таблицах.");
             }
-            loadUsers();
+            loadUsersFromModel();
         }
     }
 
@@ -176,15 +164,11 @@ public class UserTableController {
             String role = roleField.getText().trim();
             if (!login.isEmpty() && !password.isEmpty() && !role.isEmpty()) {
                 try {
+                    User newUser = new User(0, login, password, role);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("INSERT INTO Users(login, password, role) VALUES (?, ?, ?)");
-                    stmt.setString(1, login);
-                    stmt.setString(2, password);
-                    stmt.setString(3, role);
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.add(newUser, conn);
                     conn.close();
-                    loadUsers();
+                    loadUsersFromModel();
                     dialog.close();
                 } catch (Exception ex) {
                     showError("Не удалось добавить запись из-за некорректных данных.");
@@ -213,19 +197,16 @@ public class UserTableController {
             String role = roleField.getText().trim();
             if (!login.isEmpty() && !password.isEmpty() && !role.isEmpty()) {
                 try {
+                    selected.setLogin(login);
+                    selected.setPassword(password);
+                    selected.setRole(role);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("UPDATE Users SET login=?, password=?, role=? WHERE id=?");
-                    stmt.setString(1, login);
-                    stmt.setString(2, password);
-                    stmt.setString(3, role);
-                    stmt.setInt(4, selected.getId());
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.update(selected, conn);
                     conn.close();
-                    loadUsers();
+                    loadUsersFromModel();
                     dialog.close();
                 } catch (Exception ex) {
-                    showError("Не удалось обновить запись.");
+                    showError("Не удалось обновить запись из-за некорректных данных.");
                 }
             } else {
                 showError("Не все поля заполнены.");

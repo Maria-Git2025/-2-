@@ -19,11 +19,6 @@ public class InsuranceTypesTable implements TableModel<InsuranceType> {
         return instance;
     }
 
-    // Добавляет вид страхования в список
-    public void addInsuranceType(InsuranceType type) {
-        insuranceTypes.add(type);
-    }
-
     // Добавляет вид страхования в базу и список
     @Override
     public void add(InsuranceType type, java.sql.Connection conn) throws java.sql.SQLException {

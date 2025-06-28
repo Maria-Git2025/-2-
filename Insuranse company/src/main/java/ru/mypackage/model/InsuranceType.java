@@ -17,4 +17,5 @@ public class InsuranceType {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getAgentPercentage() { return agentPercentage; }
+    public void setAgentPercentage(String agentPercentage) { this.agentPercentage = agentPercentage; }
 } 

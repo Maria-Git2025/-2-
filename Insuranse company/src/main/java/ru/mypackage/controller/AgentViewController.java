@@ -28,8 +28,8 @@ public class AgentViewController {
         this.view.setSaveProfileHandler(new SaveProfileHandler());
         this.view.setEditUserHandler(new EditUserHandler());
 
-        ru.mypackage.controller.ClientTableController clientTableController = new ru.mypackage.controller.ClientTableController(null, this.view.clientTableView);
-        ru.mypackage.controller.ContractsTableController contractsTableController = new ru.mypackage.controller.ContractsTableController(null, this.view.contractsTableView);
+        ru.mypackage.controller.ClientTableController clientTableController = new ru.mypackage.controller.ClientTableController(ru.mypackage.model.ClientsTable.getInstance(), this.view.clientTableView);
+        ru.mypackage.controller.ContractsTableController contractsTableController = new ru.mypackage.controller.ContractsTableController(ru.mypackage.model.ContractsTable.getInstance(), this.view.contractsTableView);
         this.view.setClientAddHandler(clientTableController.new AddClientHandler());
         this.view.setClientEditHandler(clientTableController.new EditClientHandler());
         this.view.setClientDeleteHandler(clientTableController.new DeleteClientHandler());

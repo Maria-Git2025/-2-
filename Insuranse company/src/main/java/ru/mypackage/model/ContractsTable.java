@@ -21,11 +21,6 @@ public class ContractsTable implements TableModel<Contract> {
         return instance;
     }
 
-    // Добавляет договор в список
-    public void addContract(Contract contract) {
-        contracts.add(contract);
-    }
-
     // Добавляет договор в базу и список
     @Override
     public void add(Contract contract, Connection conn) throws SQLException {

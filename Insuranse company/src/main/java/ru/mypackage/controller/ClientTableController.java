@@ -26,7 +26,7 @@ public class ClientTableController {
     public ClientTableController(ClientsTable model, ClientTableView view) {
         this.model = model;
         this.view = view;
-        loadClients();
+        loadClientsFromModel();
         filteredData = new FilteredList<Client>(clientList, new Predicate<Client>() {
             public boolean test(Client client) { return true; }
         });
@@ -40,25 +40,13 @@ public class ClientTableController {
         view.setDeleteButtonHandler(new DeleteClientHandler());
     }
 
-    // Загружает клиентов из базы данных
-    public void loadClients() {
+    // Загружает клиентов из модели (которая работает с базой данных)
+    public void loadClientsFromModel() {
         clientList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Clients");
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int idUser = rs.getInt("id_user");
-                String surname = rs.getString("surname");
-                String name = rs.getString("name");
-                String patronymic = rs.getString("patronymic");
-                String dateOfBirth = rs.getString("date_of_birth");
-                String phoneNumber = rs.getString("phone_number");
-                clientList.add(new Client(id, idUser, surname, name, patronymic, dateOfBirth, phoneNumber));
-            }
-            rs.close();
-            stmt.close();
+            model.loadFromDatabase(conn);
+            clientList.addAll(model.getAll());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -161,15 +149,12 @@ public class ClientTableController {
             if (selected == null) return;
             try {
                 Connection conn = new ConnectionDatabase().connection;
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM Clients WHERE id=?");
-                stmt.setInt(1, selected.getId());
-                stmt.executeUpdate();
-                stmt.close();
+                model.remove(selected, conn);
                 conn.close();
             } catch (SQLException ex) {
                 showError("Невозможно удалить запись: есть связанные записи в других таблицах.");
             }
-            loadClients();
+            loadClientsFromModel();
         }
     }
 
@@ -195,18 +180,11 @@ public class ClientTableController {
                 String dob = dobField.getText().trim();
                 String phone = phoneField.getText().trim();
                 if (!surname.isEmpty() && !name.isEmpty() && !dob.isEmpty() && !phone.isEmpty()) {
+                    Client newClient = new Client(0, idUser, surname, name, patronymic, dob, phone);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("INSERT INTO Clients(id_user, surname, name, patronymic, date_of_birth, phone_number) VALUES (?, ?, ?, ?, ?, ?)");
-                    stmt.setInt(1, idUser);
-                    stmt.setString(2, surname);
-                    stmt.setString(3, name);
-                    stmt.setString(4, patronymic);
-                    stmt.setString(5, dob);
-                    stmt.setString(6, phone);
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.add(newClient, conn);
                     conn.close();
-                    loadClients();
+                    loadClientsFromModel();
                     dialog.close();
                 } else {
                     showError("Не все поля заполнены.");
@@ -238,23 +216,19 @@ public class ClientTableController {
             String dob = dobField.getText().trim();
             String phone = phoneField.getText().trim();
             if (!surname.isEmpty() && !name.isEmpty() && !dob.isEmpty() && !phone.isEmpty()) {
+                selected.setSurname(surname);
+                selected.setName(name);
+                selected.setPatronymic(patronymic);
+                selected.setDateOfBirth(dob);
+                selected.setPhoneNumber(phone);
                 try {
-                    if (!dob.matches("\\d{4}-\\d{2}-\\d{2}")) throw new Exception();
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("UPDATE Clients SET surname=?, name=?, patronymic=?, date_of_birth=?, phone_number=? WHERE id=?");
-                    stmt.setString(1, surname);
-                    stmt.setString(2, name);
-                    stmt.setString(3, patronymic);
-                    stmt.setString(4, dob);
-                    stmt.setString(5, phone);
-                    stmt.setInt(6, selected.getId());
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.update(selected, conn);
                     conn.close();
-                    loadClients();
+                    loadClientsFromModel();
                     dialog.close();
                 } catch (Exception ex) {
-                    showError("Не удалось обновить запись из-за некорректных данных.");
+                    showError("Не удалось обновить запись из-за ошибки.");
                 }
             } else {
                 showError("Не все поля заполнены.");

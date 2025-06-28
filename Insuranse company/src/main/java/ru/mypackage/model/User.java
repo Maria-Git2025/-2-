@@ -22,4 +22,5 @@ public class User {
     public void setLogin(String login) { this.login = login; }
     public void setPassword(String password) { this.password = password; }
     public void setId(int id) { this.id = id; }
+    public void setRole(String role) { this.role = role; }
 } 

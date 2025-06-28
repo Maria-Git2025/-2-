@@ -57,7 +57,7 @@ public class AgentView {
         sectionSelector = new ComboBox<>();
         sectionSelector.getItems().addAll("Мои клиенты", "Мои договоры", "Филиалы", "Виды страхования");
         sectionSelector.setValue("Мои клиенты");
-        clientTableView = new ClientTableView(false);
+        clientTableView = new ClientTableView(true);
         contractsTableView = new ContractsTableView(true, true);
         branchesTableView = new BranchesTableView(false);
         insuranceTypesTableView = new InsuranceTypesTableView(false);

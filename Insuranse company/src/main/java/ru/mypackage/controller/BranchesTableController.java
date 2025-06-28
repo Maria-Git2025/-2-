@@ -26,7 +26,7 @@ public class BranchesTableController {
     public BranchesTableController(BranchesTable model, BranchesTableView view) {
         this.model = model;
         this.view = view;
-        loadBranches();
+        loadBranchesFromModel();
         filteredData = new FilteredList<Branch>(branchList, new Predicate<Branch>() {
             public boolean test(Branch branch) { return true; }
         });
@@ -40,22 +40,13 @@ public class BranchesTableController {
         view.setDeleteButtonHandler(new DeleteBranchHandler());
     }
 
-    // Загружает филиалы из базы данных
-    public void loadBranches() {
+    // Загружает филиалы из модели (которая работает с базой данных)
+    public void loadBranchesFromModel() {
         branchList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Branches");
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                String address = rs.getString("address");
-                String phoneNumber = rs.getString("phone_number");
-                branchList.add(new Branch(id, name, address, phoneNumber));
-            }
-            rs.close();
-            stmt.close();
+            model.loadFromDatabase(conn);
+            branchList.addAll(model.getAll());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -138,15 +129,12 @@ public class BranchesTableController {
             if (selected == null) return;
             try {
                 Connection conn = new ConnectionDatabase().connection;
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM Branches WHERE id=?");
-                stmt.setInt(1, selected.getId());
-                stmt.executeUpdate();
-                stmt.close();
+                model.remove(selected, conn);
                 conn.close();
             } catch (SQLException ex) {
                 showError("Невозможно удалить запись: есть связанные записи в других таблицах.");
             }
-            loadBranches();
+            loadBranchesFromModel();
         }
     }
 
@@ -175,18 +163,14 @@ public class BranchesTableController {
             String phone = phoneField.getText().trim();
             if (!name.isEmpty() && !address.isEmpty() && !phone.isEmpty()) {
                 try {
+                    Branch newBranch = new Branch(0, name, address, phone);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("INSERT INTO Branches(name, address, phone_number) VALUES (?, ?, ?)");
-                    stmt.setString(1, name);
-                    stmt.setString(2, address);
-                    stmt.setString(3, phone);
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.add(newBranch, conn);
                     conn.close();
-                    loadBranches();
+                    loadBranchesFromModel();
                     dialog.close();
                 } catch (Exception ex) {
-                    showError("Не удалось добавить запись из-за некорректных данных.");
+                    showError("Не удалось добавить запись из-за ошибки.");
                 }
             } else {
                 showError("Не все поля заполнены.");
@@ -211,20 +195,17 @@ public class BranchesTableController {
             String address = addressField.getText().trim();
             String phone = phoneField.getText().trim();
             if (!name.isEmpty() && !address.isEmpty() && !phone.isEmpty()) {
+                selected.setName(name);
+                selected.setAddress(address);
+                selected.setPhoneNumber(phone);
                 try {
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("UPDATE Branches SET name=?, address=?, phone_number=? WHERE id=?");
-                    stmt.setString(1, name);
-                    stmt.setString(2, address);
-                    stmt.setString(3, phone);
-                    stmt.setInt(4, selected.getId());
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.update(selected, conn);
                     conn.close();
-                    loadBranches();
+                    loadBranchesFromModel();
                     dialog.close();
                 } catch (Exception ex) {
-                    showError("Не удалось обновить запись из-за некорректных данных.");
+                    showError("Не удалось обновить запись из-за ошибки.");
                 }
             } else {
                 showError("Не все поля заполнены.");

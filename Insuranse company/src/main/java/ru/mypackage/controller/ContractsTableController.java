@@ -26,7 +26,7 @@ public class ContractsTableController {
     public ContractsTableController(ContractsTable model, ContractsTableView view) {
         this.model = model;
         this.view = view;
-        loadContracts();
+        loadContractsFromModel();
         filteredData = new FilteredList<Contract>(contractList, new Predicate<Contract>() {
             public boolean test(Contract contract) { return true; }
         });
@@ -40,27 +40,13 @@ public class ContractsTableController {
         view.setDeleteButtonHandler(new DeleteContractHandler());
     }
 
-    // Загружает договоры из базы данных
-    public void loadContracts() {
+    // Загружает контракты из модели (которая работает с базой данных)
+    public void loadContractsFromModel() {
         contractList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
-            ru.mypackage.model.InsuranceTypesTable.getInstance().loadFromDatabase(conn);
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Contracts");
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int idBranch = rs.getInt("id_branch");
-                int idClient = rs.getInt("id_client");
-                int idAgent = rs.getInt("id_agent");
-                int idInsuranceType = rs.getInt("id_insurance_type");
-                String dateSigned = rs.getString("date_signed");
-                String insuranceAmount = rs.getString("insurance_amount");
-                String tariffRate = rs.getString("tariff_rate");
-                contractList.add(new Contract(id, idBranch, idClient, idAgent, idInsuranceType, dateSigned, insuranceAmount, tariffRate, "", "", ""));
-            }
-            rs.close();
-            stmt.close();
+            model.loadFromDatabase(conn);
+            contractList.addAll(model.getAll());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -109,11 +95,11 @@ public class ContractsTableController {
     }
 
     // Показывает окно ошибки
-    private void showError() {
+    private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Ошибка");
         alert.setHeaderText(null);
-        alert.setContentText("Не удалось добавить запись из-за некорректных данных.");
+        alert.setContentText(message);
         alert.showAndWait();
     }
 
@@ -168,15 +154,12 @@ public class ContractsTableController {
             if (selected == null) return;
             try {
                 Connection conn = new ConnectionDatabase().connection;
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM Contracts WHERE id=?");
-                stmt.setInt(1, selected.getId());
-                stmt.executeUpdate();
-                stmt.close();
+                model.remove(selected, conn);
                 conn.close();
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                showError("Невозможно удалить запись: есть связанные записи в других таблицах.");
             }
-            loadContracts();
+            loadContractsFromModel();
         }
     }
 
@@ -204,25 +187,17 @@ public class ContractsTableController {
                 String insuranceAmount = insuranceAmountField.getText().trim();
                 String tariffRate = tariffRateField.getText().trim();
                 if (!dateSigned.isEmpty() && !insuranceAmount.isEmpty() && !tariffRate.isEmpty()) {
+                    Contract newContract = new Contract(0, idBranch, idClient, idAgent, idInsuranceType, dateSigned, insuranceAmount, tariffRate, "", "", "");
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("INSERT INTO Contracts(id_branch, id_client, id_agent, id_insurance_type, date_signed, insurance_amount, tariff_rate) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    stmt.setInt(1, idBranch);
-                    stmt.setInt(2, idClient);
-                    stmt.setInt(3, idAgent);
-                    stmt.setInt(4, idInsuranceType);
-                    stmt.setString(5, dateSigned);
-                    stmt.setString(6, insuranceAmount);
-                    stmt.setString(7, tariffRate);
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.add(newContract, conn);
                     conn.close();
-                    loadContracts();
+                    loadContractsFromModel();
                     dialog.close();
                 } else {
-                    showError();
+                    showError("Не все поля заполнены корректно.");
                 }
             } catch (Exception ex) {
-                showError();
+                showError("Не удалось добавить запись из-за ошибки.");
             }
         }
     }
@@ -253,29 +228,23 @@ public class ContractsTableController {
                 String insuranceAmount = insuranceAmountField.getText().trim();
                 String tariffRate = tariffRateField.getText().trim();
                 if (!dateSigned.isEmpty() && !insuranceAmount.isEmpty() && !tariffRate.isEmpty()) {
-                    if (!dateSigned.matches("\\d{4}-\\d{2}-\\d{2}")) throw new Exception();
-                    Double.parseDouble(insuranceAmount.replace(",", "."));
-                    Double.parseDouble(tariffRate.replace(",", "."));
+                    selected.setIdBranch(idBranch);
+                    selected.setIdClient(idClient);
+                    selected.setIdAgent(idAgent);
+                    selected.setIdInsuranceType(idInsuranceType);
+                    selected.setDateSigned(dateSigned);
+                    selected.setInsuranceAmount(insuranceAmount);
+                    selected.setTariffRate(tariffRate);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("UPDATE Contracts SET id_branch=?, id_client=?, id_agent=?, id_insurance_type=?, date_signed=?, insurance_amount=?, tariff_rate=? WHERE id=?");
-                    stmt.setInt(1, idBranch);
-                    stmt.setInt(2, idClient);
-                    stmt.setInt(3, idAgent);
-                    stmt.setInt(4, idInsuranceType);
-                    stmt.setString(5, dateSigned);
-                    stmt.setString(6, insuranceAmount);
-                    stmt.setString(7, tariffRate);
-                    stmt.setInt(8, selected.getId());
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.update(selected, conn);
                     conn.close();
-                    loadContracts();
+                    loadContractsFromModel();
                     dialog.close();
                 } else {
-                    showError();
+                    showError("Не все поля заполнены корректно.");
                 }
             } catch (Exception ex) {
-                showError();
+                showError("Не удалось обновить запись из-за ошибки.");
             }
         }
     }

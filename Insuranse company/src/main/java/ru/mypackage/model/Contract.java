@@ -31,12 +31,19 @@ public class Contract {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getIdBranch() { return idBranch; }
+    public void setIdBranch(int idBranch) { this.idBranch = idBranch; }
     public int getIdClient() { return idClient; }
+    public void setIdClient(int idClient) { this.idClient = idClient; }
     public int getIdAgent() { return idAgent; }
+    public void setIdAgent(int idAgent) { this.idAgent = idAgent; }
     public int getIdInsuranceType() { return idInsuranceType; }
+    public void setIdInsuranceType(int idInsuranceType) { this.idInsuranceType = idInsuranceType; }
     public String getDateSigned() { return dateSigned; }
+    public void setDateSigned(String dateSigned) { this.dateSigned = dateSigned; }
     public String getInsuranceAmount() { return insuranceAmount; }
+    public void setInsuranceAmount(String insuranceAmount) { this.insuranceAmount = insuranceAmount; }
     public String getTariffRate() { return tariffRate; }
+    public void setTariffRate(String tariffRate) { this.tariffRate = tariffRate; }
     public String getBranchName() { return branchName; }
     public void setBranchName(String branchName) { this.branchName = branchName; }
     public String getAgentFio() { return agentFio; }

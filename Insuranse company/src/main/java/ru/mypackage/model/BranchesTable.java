@@ -19,12 +19,7 @@ public class BranchesTable implements TableModel<Branch> {
         }
         return instance;
     }
-
-    // Добавляет филиал в список
-    public void addBranch(Branch branch) {
-        branches.add(branch);
-    }
-
+    
     // Добавляет филиал в базу и список
     @Override
     public void add(Branch branch, Connection conn) throws SQLException {

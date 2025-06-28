@@ -20,11 +20,6 @@ public class AgentsTable implements TableModel<Agent> {
         return instance;
     }
 
-    // Добавляет агента в список
-    public void addAgent(Agent agent) {
-        agents.add(agent);
-    }
-
     // Добавляет агента в базу и список
     @Override
     public void add(Agent agent, Connection conn) throws SQLException {

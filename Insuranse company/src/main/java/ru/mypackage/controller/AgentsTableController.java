@@ -26,7 +26,7 @@ public class AgentsTableController {
     public AgentsTableController(AgentsTable model, AgentsTableView view) {
         this.model = model;
         this.view = view;
-        loadAgents();
+        loadAgentsFromModel();
         filteredData = new FilteredList<Agent>(agentList, new Predicate<Agent>() {
             public boolean test(Agent agent) { return true; }
         });
@@ -40,26 +40,13 @@ public class AgentsTableController {
         view.setDeleteButtonHandler(new DeleteAgentHandler());
     }
 
-    // Загружает агентов из базы данных
-    public void loadAgents() {
+    // Загружает агентов из модели (которая работает с базой данных)
+    public void loadAgentsFromModel() {
         agentList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Insurance_Agents");
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int idUser = rs.getInt("id_user");
-                int idBranch = rs.getInt("id_branch");
-                String surname = rs.getString("surname");
-                String name = rs.getString("name");
-                String patronymic = rs.getString("patronymic");
-                String address = rs.getString("address");
-                String phoneNumber = rs.getString("phone_number");
-                agentList.add(new Agent(id, idUser, idBranch, surname, name, patronymic, address, phoneNumber));
-            }
-            rs.close();
-            stmt.close();
+            model.loadFromDatabase(conn);
+            agentList.addAll(model.getAll());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -167,15 +154,12 @@ public class AgentsTableController {
             if (selected == null) return;
             try {
                 Connection conn = new ConnectionDatabase().connection;
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM Insurance_Agents WHERE id=?");
-                stmt.setInt(1, selected.getId());
-                stmt.executeUpdate();
-                stmt.close();
+                model.remove(selected, conn);
                 conn.close();
             } catch (SQLException ex) {
                 showError("Невозможно удалить запись: есть связанные записи в других таблицах.");
             }
-            loadAgents();
+            loadAgentsFromModel();
         }
     }
 
@@ -203,19 +187,11 @@ public class AgentsTableController {
                 String address = addressField.getText().trim();
                 String phone = phoneField.getText().trim();
                 if (!surname.isEmpty() && !name.isEmpty() && !address.isEmpty() && !phone.isEmpty()) {
+                    Agent newAgent = new Agent(0, idUser, idBranch, surname, name, patronymic, address, phone);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("INSERT INTO Insurance_Agents(id_user, id_branch, surname, name, patronymic, address, phone_number) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    stmt.setInt(1, idUser);
-                    stmt.setInt(2, idBranch);
-                    stmt.setString(3, surname);
-                    stmt.setString(4, name);
-                    stmt.setString(5, patronymic);
-                    stmt.setString(6, address);
-                    stmt.setString(7, phone);
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.add(newAgent, conn);
                     conn.close();
-                    loadAgents();
+                    loadAgentsFromModel();
                     dialog.close();
                 } else {
                     showError("Не все поля заполнены корректно.");
@@ -252,20 +228,17 @@ public class AgentsTableController {
                 String address = addressField.getText().trim();
                 String phone = phoneField.getText().trim();
                 if (!surname.isEmpty() && !name.isEmpty() && !address.isEmpty() && !phone.isEmpty()) {
+                    selected.setIdUser(idUser);
+                    selected.setIdBranch(idBranch);
+                    selected.setSurname(surname);
+                    selected.setName(name);
+                    selected.setPatronymic(patronymic);
+                    selected.setAddress(address);
+                    selected.setPhoneNumber(phone);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("UPDATE Insurance_Agents SET id_user=?, id_branch=?, surname=?, name=?, patronymic=?, address=?, phone_number=? WHERE id=?");
-                    stmt.setInt(1, idUser);
-                    stmt.setInt(2, idBranch);
-                    stmt.setString(3, surname);
-                    stmt.setString(4, name);
-                    stmt.setString(5, patronymic);
-                    stmt.setString(6, address);
-                    stmt.setString(7, phone);
-                    stmt.setInt(8, selected.getId());
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.update(selected, conn);
                     conn.close();
-                    loadAgents();
+                    loadAgentsFromModel();
                     dialog.close();
                 } else {
                     showError("Не все поля заполнены корректно.");

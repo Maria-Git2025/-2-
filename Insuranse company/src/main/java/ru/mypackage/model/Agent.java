@@ -25,7 +25,9 @@ public class Agent {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getIdUser() { return idUser; }
+    public void setIdUser(int idUser) { this.idUser = idUser; }
     public int getIdBranch() { return idBranch; }
+    public void setIdBranch(int idBranch) { this.idBranch = idBranch; }
     public String getSurname() { return surname; }
     public void setSurname(String surname) { this.surname = surname; }
     public String getName() { return name; }

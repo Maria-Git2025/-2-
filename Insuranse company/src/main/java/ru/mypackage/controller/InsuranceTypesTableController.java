@@ -26,7 +26,7 @@ public class InsuranceTypesTableController {
     public InsuranceTypesTableController(InsuranceTypesTable model, InsuranceTypesTableView view) {
         this.model = model;
         this.view = view;
-        loadTypes();
+        loadTypesFromModel();
         filteredData = new FilteredList<InsuranceType>(typeList, new Predicate<InsuranceType>() {
             public boolean test(InsuranceType type) { return true; }
         });
@@ -40,21 +40,13 @@ public class InsuranceTypesTableController {
         view.setDeleteButtonHandler(new DeleteTypeHandler());
     }
 
-    // Загружает виды страхования из базы данных
-    public void loadTypes() {
+    // Загружает виды страхования из модели (которая работает с базой данных)
+    public void loadTypesFromModel() {
         typeList.clear();
         try {
             Connection conn = new ConnectionDatabase().connection;
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM Insurance_Types");
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                String agentPercentage = rs.getString("agent_percentage");
-                typeList.add(new InsuranceType(id, name, agentPercentage));
-            }
-            rs.close();
-            stmt.close();
+            model.loadFromDatabase(conn);
+            typeList.addAll(model.getAll());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -133,15 +125,12 @@ public class InsuranceTypesTableController {
             if (selected == null) return;
             try {
                 Connection conn = new ConnectionDatabase().connection;
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM Insurance_Types WHERE id=?");
-                stmt.setInt(1, selected.getId());
-                stmt.executeUpdate();
-                stmt.close();
+                model.remove(selected, conn);
                 conn.close();
             } catch (SQLException ex) {
                 showError("Невозможно удалить запись: есть связанные записи в других таблицах.");
             }
-            loadTypes();
+            loadTypesFromModel();
         }
     }
 
@@ -169,14 +158,11 @@ public class InsuranceTypesTableController {
             if (!name.isEmpty() && !percent.isEmpty()) {
                 try {
                     Double.parseDouble(percent.replace(",", "."));
+                    InsuranceType newType = new InsuranceType(0, name, percent);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("INSERT INTO Insurance_Types(name, agent_percentage) VALUES (?, ?)");
-                    stmt.setString(1, name);
-                    stmt.setString(2, percent);
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.add(newType, conn);
                     conn.close();
-                    loadTypes();
+                    loadTypesFromModel();
                     dialog.close();
                 } catch (Exception ex) {
                     showError("Не удалось добавить запись из-за некорректных данных.");
@@ -204,15 +190,12 @@ public class InsuranceTypesTableController {
             if (!name.isEmpty() && !percent.isEmpty()) {
                 try {
                     Double.parseDouble(percent.replace(",", "."));
+                    selected.setName(name);
+                    selected.setAgentPercentage(percent);
                     Connection conn = new ConnectionDatabase().connection;
-                    PreparedStatement stmt = conn.prepareStatement("UPDATE Insurance_Types SET name=?, agent_percentage=? WHERE id=?");
-                    stmt.setString(1, name);
-                    stmt.setString(2, percent);
-                    stmt.setInt(3, selected.getId());
-                    stmt.executeUpdate();
-                    stmt.close();
+                    model.update(selected, conn);
                     conn.close();
-                    loadTypes();
+                    loadTypesFromModel();
                     dialog.close();
                 } catch (Exception ex) {
                     showError("Не удалось обновить запись из-за некорректных данных.");

@@ -25,16 +25,6 @@ public class ClientsTable implements TableModel<Client> {
         clients.add(client);
     }
 
-    // Ищет клиента по номеру телефона
-    public Client findByPhone(String phone) {
-        for (Client client : clients) {
-            if (client.getPhoneNumber().equals(phone)) {
-                return client;
-            }
-        }
-        return null;
-    }
-
     // Добавляет клиента в базу и список
     @Override
     public void add(Client client, Connection conn) throws SQLException {
